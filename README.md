@@ -1,4 +1,7 @@
 # zipslipper
+<p align="right">
+  [![golangci-lint](https://github.com/NodyHub/zipslipper/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/NodyHub/zipslipper/actions/workflows/golangci-lint.yml)
+</p>
 Create tar/zip archives that try to exploit zipslip vulnerability.
 
 ## CLI Tool
