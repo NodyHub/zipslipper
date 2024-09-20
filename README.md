@@ -1,2 +1,2 @@
-# zip-slipper
+# zipslipper
 Create tar archives 
