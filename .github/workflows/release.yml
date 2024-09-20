@@ -1,26 +1,31 @@
-name: release
+name: goreleaser
 
 on:
   release:
     types: [ published ]
 
+permissions:
+  contents: write
+
 jobs:
-  release:
-    name: Release
+  goreleaser:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup go 1.21
-        uses: actions/setup-go@v4.1.0
-        with: { go-version: '1.21' }
-
-      - name: Checkout code
-        uses: actions/checkout@v3.5.3
-        
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v4.4.0
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      -
+        name: Set up Go
+        uses: actions/setup-go@v5
+      -
+        name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
-          version: latest
+          # 'latest', 'nightly', or a semver
+          version: 'latest'
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
