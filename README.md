@@ -6,6 +6,10 @@ Create tar/zip archives that try to exploit zipslip vulnerability.
 
 You can use this library on the command line with the `zipslipper` command.
 
+### Pre-Build release
+
+Download a pre-build release for your system architecture from the [release page](https://github.com/NodyHub/zipslipper/releases).
+
 ### Installation
 
 ```cli
