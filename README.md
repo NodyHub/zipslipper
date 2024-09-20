@@ -44,18 +44,37 @@ Flags:
 
 ## Usage example
 
+### Zip
+
 ```shell
-(main) ~/git/zipslipper% make && ./zipslipper go.mod ../../go.mod test.zip
-(main) ~/git/zipslipper% unzip -l test.zip
+(main[2]) ~/git/zipslipper% zipslipper go.mod ../../foo/bar/go.mod test.zip
+(main[2]) ~/git/zipslipper% unzip -l test.zip
 Archive:  test.zip
   Length      Date    Time    Name
 ---------  ---------- -----   ----
-        0  09-20-2024 09:41   sub/
-        3  09-20-2024 09:41   sub/root
-        3  09-20-2024 09:41   sub/root/outside
-        3  09-20-2024 09:41   sub/root/outside/0
-        3  09-20-2024 09:41   sub/root/outside/0/1
-      103  09-20-2024 08:39   sub/root/outside/0/1/go.mod
+        0  09-20-2024 11:01   sub/
+        3  09-20-2024 11:01   sub/root
+        3  09-20-2024 11:01   sub/root/outside
+        3  09-20-2024 11:01   sub/root/outside/0
+        3  09-20-2024 11:01   sub/root/outside/0/1
+        0  09-20-2024 11:01   sub/root/outside/0/1/foo/
+        0  09-20-2024 11:01   sub/root/outside/0/1/foo/bar/
+      103  09-20-2024 08:39   sub/root/outside/0/1/foo/bar/go.mod
 ---------                     -------
-      115                     6 files
+      115                     8 files
+```
+
+### Tar
+
+```shell
+(main[2]) ~/git/zipslipper% zipslipper -t tar go.mod ../../foo/bar/go.mod test.tar
+(main[2]) ~/git/zipslipper% tar ztvf test.tar
+drwxr-xr-x  0 0      0           0 20 Sep 11:01 sub/
+lrwxr-xr-x  0 0      0           0 20 Sep 11:01 sub/root -> ../
+lrwxr-xr-x  0 0      0           0 20 Sep 11:01 sub/root/outside -> ../
+lrwxr-xr-x  0 0      0           0 20 Sep 11:01 sub/root/outside/0 -> ../
+lrwxr-xr-x  0 0      0           0 20 Sep 11:01 sub/root/outside/0/1 -> ../
+drwxr-xr-x  0 0      0           0 20 Sep 11:01 sub/root/outside/0/1/foo/
+drwxr-xr-x  0 0      0           0 20 Sep 11:01 sub/root/outside/0/1/foo/bar/
+-rw-r--r--  0 jan    staff     103 20 Sep 08:39 sub/root/outside/0/1/foo/bar/go.mod
 ```
