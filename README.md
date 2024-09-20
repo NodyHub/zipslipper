@@ -41,3 +41,21 @@ Flags:
   -v, --verbose               Verbose logging.
   -V, --version               Print release version information.
 ```
+
+## Usage example
+
+```shell
+(main) ~/git/zipslipper% make && ./zipslipper go.mod ../../go.mod test.zip
+(main) ~/git/zipslipper% unzip -l test.zip
+Archive:  test.zip
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+        0  09-20-2024 09:41   sub/
+        3  09-20-2024 09:41   sub/root
+        3  09-20-2024 09:41   sub/root/outside
+        3  09-20-2024 09:41   sub/root/outside/0
+        3  09-20-2024 09:41   sub/root/outside/0/1
+      103  09-20-2024 08:39   sub/root/outside/0/1/go.mod
+---------                     -------
+      115                     6 files
+```
