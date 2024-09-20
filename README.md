@@ -2,29 +2,6 @@
 <a href="https://github.com/NodyHub/zipslipper/actions/workflows/golangci-lint.yml"><img src="https://github.com/NodyHub/zipslipper/actions/workflows/golangci-lint.yml/badge.svg" align="right" alt="golangci-lint"></a>
 Create tar/zip archives that try to exploit zipslip vulnerability.
 
-## CLI Tool
-
-You can use this library on the command line with the `zipslipper` command.
-
-### Pre-Build release
-
-Download a pre-build release for your system architecture from the [release page](https://github.com/NodyHub/zipslipper/releases).
-
-### Installation
-
-```cli
-go install github.com/NodyHub/zipslipper@latest
-```
-
-### Manual Build and Installation
-
-```cli
-git clone git@github.com:NodyHub/zipslipper.git
-cd zipslipper
-make
-make install
-```
-
 ## Usage
 
 Basic usage on cli:
@@ -82,4 +59,27 @@ lrwxr-xr-x  0 0      0           0 20 Sep 11:01 sub/root/outside/0/1 -> ../
 drwxr-xr-x  0 0      0           0 20 Sep 11:01 sub/root/outside/0/1/foo/
 drwxr-xr-x  0 0      0           0 20 Sep 11:01 sub/root/outside/0/1/foo/bar/
 -rw-r--r--  0 jan    staff     103 20 Sep 08:39 sub/root/outside/0/1/foo/bar/go.mod
+```
+
+## Install
+
+You can use this library on the command line with the `zipslipper` command.
+
+### Pre-build release
+
+Download a pre-build release for your system architecture from the [release page](https://github.com/NodyHub/zipslipper/releases).
+
+### Build via golang toolchain
+
+```cli
+go install github.com/NodyHub/zipslipper@latest
+```
+
+### Manual build and installation
+
+```cli
+git clone git@github.com:NodyHub/zipslipper.git
+cd zipslipper
+make
+make install
 ```
